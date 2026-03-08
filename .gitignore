@@ -8,6 +8,8 @@ build/
 # Data files (too large for git) — track only essential dashboard data
 data/raw/*
 !data/raw/pvgis_grid.csv
+!data/raw/protected_areas.*
+!data/raw/flood_zones.*
 data/processed/
 data/output/*
 !data/output/grid_predictions.csv
