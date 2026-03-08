@@ -1,0 +1,23 @@
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Data files (too large for git) — track only essential dashboard data
+data/raw/*
+!data/raw/pvgis_grid.csv
+data/processed/
+data/output/*
+!data/output/grid_predictions.csv
+!data/output/nw_sites_final_ranking.csv
+
+# Credentials (never commit)
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store

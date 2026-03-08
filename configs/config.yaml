@@ -1,0 +1,108 @@
+# ============================================================
+# UK Solar Siting — Pipeline Configuration
+# ============================================================
+
+# --- Paths -----------------------------------------------------------
+paths:
+  raw_data: data/raw
+  processed_data: data/processed
+  output: data/output
+
+  # Phase 1: label sources
+  repd_csv: data/raw/repd.csv                          # UK REPD download
+  uk_boundary_shp: data/raw/uk_boundary.shp            # UK land boundary (Natural Earth / OS)
+
+  # Phase 2: feature layers
+  era5_nc: data/raw/era5_uk_solar.nc                   # ERA5 reanalysis (temperature, cloud)
+  pvgis_grid_csv: data/raw/pvgis_grid.csv              # PVGIS irradiance grid (1km, pre-cached)
+  terrain_tif: data/raw/os_terrain50.tif               # OS Terrain 50 DEM
+  osm_substations_shp: data/raw/osm_substations.shp    # OSM substations extract
+  osm_roads_shp: data/raw/osm_roads.shp                # OSM major roads extract
+  osm_transmission_shp: data/raw/osm_transmission.shp  # OSM 132kV+ transmission lines
+  protected_areas_shp: data/raw/protected_areas.shp    # DEFRA national parks + AONB
+  sssi_shp: data/raw/sssi.shp                          # Natural England SSSI
+  flood_zones_shp: data/raw/flood_zones.shp            # Environment Agency flood zones 2+3
+  agricultural_land_shp: data/raw/agricultural_land.shp # DEFRA agricultural land classification
+
+  # Phase 2: outputs
+  feature_matrix_csv: data/processed/feature_matrix.csv
+
+  # Phase 3: model artefacts
+  model_file: data/output/xgb_model.json
+  evaluation_report: data/output/evaluation_report.json
+  feature_importance_png: data/output/feature_importance.png
+  roc_curve_png: data/output/roc_curve.png
+
+  # Phase 4: prediction outputs
+  grid_predictions_csv: data/output/grid_predictions.csv
+  heatmap_html: data/output/suitability_heatmap.html
+
+# --- Phase 1: Labeling -----------------------------------------------
+labeling:
+  repd_url: "https://assets.publishing.service.gov.uk/media/renewable-energy-planning-database.csv"
+  # REPD filters
+  technology: "Solar Photovoltaics"
+  status_include:
+    - "Operational"
+    - "Under Construction"
+  min_capacity_mw: 0.01                # ignore tiny entries
+
+  # Negative sampling
+  negative_ratio: 1.0                  # negatives = ratio * positives
+  min_distance_km: 2.0                 # min distance from any positive site
+  random_seed: 42
+
+# --- Phase 2: Feature Engineering ------------------------------------
+features:
+  # ERA5 variables (temperature + cloud only; irradiance from PVGIS instead of ssrd)
+  era5_variables:
+    - t2m    # 2-metre temperature
+    - tcc    # total cloud cover
+
+  # Terrain derived features
+  terrain:
+    compute_slope: true
+    compute_aspect: true
+    compute_south_facing: true   # south-facing score: cos(aspect - 180°)
+
+  # Infrastructure distance features (km)
+  infrastructure:
+    - substations
+    - major_roads
+    - transmission_lines   # 132kV+ grid
+
+  # Land constraint binary flags
+  land_constraints:
+    - national_park
+    - aonb
+    - grade1_agricultural
+    - sssi          # Sites of Special Scientific Interest
+    - flood_zone    # EA Flood Zones 2 + 3
+
+# --- Phase 3: Model --------------------------------------------------
+model:
+  test_size: 0.2
+  random_seed: 42
+  xgb_params:
+    objective: "binary:logistic"
+    eval_metric: "auc"
+    tree_method: "auto"         # set to "gpu_hist" on Colab GPU runtime
+    device: "cpu"               # set to "cuda" on Colab GPU runtime
+    max_depth: 6
+    learning_rate: 0.1
+    n_estimators: 300
+    subsample: 0.8
+    colsample_bytree: 0.8
+    reg_alpha: 0.1
+    reg_lambda: 1.0
+
+# --- Phase 4: Prediction Grid ----------------------------------------
+prediction:
+  # Bounding box (full Great Britain incl. Scotland)
+  bbox:
+    min_lat: 49.9
+    max_lat: 60.9
+    min_lon: -8.2
+    max_lon: 1.8
+  grid_spacing_km: 1.0
+  probability_threshold: 0.5           # for binary label on map
