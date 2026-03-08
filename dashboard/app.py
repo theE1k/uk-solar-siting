@@ -132,6 +132,10 @@ def load_pvgis() -> pd.DataFrame:
     return df[["lat", "lon", "pvout_kwh_kwp"]].dropna()
 
 
+HAS_PROTECTED = (DATA_RAW / "protected_areas.shp").exists()
+HAS_FLOOD = (DATA_RAW / "flood_zones.shp").exists()
+
+
 @st.cache_data
 def load_protected_areas():
     import geopandas as gpd
@@ -257,8 +261,8 @@ def build_map(sites_df: pd.DataFrame,
     fg3.add_to(m)
 
     # ── Layer 4: Protected Areas ──
-    fg4 = folium.FeatureGroup(name="Protected Areas", show=show_protected)
-    try:
+    if HAS_PROTECTED:
+        fg4 = folium.FeatureGroup(name="Protected Areas", show=show_protected)
         geojson_pa = load_protected_areas()
         folium.GeoJson(
             geojson_pa,
@@ -267,13 +271,11 @@ def build_map(sites_df: pd.DataFrame,
                 "weight": 1, "fillOpacity": 0.35,
             },
         ).add_to(fg4)
-    except Exception as e:
-        st.warning(f"Protected areas layer unavailable: {e}")
-    fg4.add_to(m)
+        fg4.add_to(m)
 
     # ── Layer 5: Flood Zones ──
-    fg5 = folium.FeatureGroup(name="Flood Zones", show=show_flood)
-    try:
+    if HAS_FLOOD:
+        fg5 = folium.FeatureGroup(name="Flood Zones", show=show_flood)
         geojson_fz = load_flood_zones()
         folium.GeoJson(
             geojson_fz,
@@ -282,9 +284,7 @@ def build_map(sites_df: pd.DataFrame,
                 "weight": 1, "fillOpacity": 0.35,
             },
         ).add_to(fg5)
-    except Exception as e:
-        st.warning(f"Flood zones layer unavailable: {e}")
-    fg5.add_to(m)
+        fg5.add_to(m)
 
     folium.LayerControl(collapsed=False).add_to(m)
 
@@ -475,8 +475,8 @@ def main():
 
         st.subheader("Map layers")
         show_pvgis = st.checkbox("PVGIS Irradiance", value=False)
-        show_protected = st.checkbox("Protected Areas", value=False)
-        show_flood = st.checkbox("Flood Zones", value=False)
+        show_protected = st.checkbox("Protected Areas", value=False) if HAS_PROTECTED else False
+        show_flood = st.checkbox("Flood Zones", value=False) if HAS_FLOOD else False
 
     # ── Recompute with sidebar parameters ────────────────────────────────────
     sites = recompute_sites(tariff, capex_per_kwp, project_years,
