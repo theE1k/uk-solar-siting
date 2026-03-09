@@ -178,6 +178,24 @@ div, span, label, button, input, select, textarea,
     border: 1px solid rgba(246,201,14,0.4) !important;
 }
 
+/* ── Main content text visibility ── */
+[data-testid="stMainBlockContainer"] p,
+[data-testid="stMainBlockContainer"] label,
+[data-testid="stMainBlockContainer"] [data-testid="stMetricValue"],
+[data-testid="stMainBlockContainer"] [data-testid="stMetricLabel"] p,
+[data-testid="stMainBlockContainer"] [data-testid="stWidgetLabel"] p {
+    color: rgba(255,255,255,0.9) !important;
+}
+[data-testid="stMainBlockContainer"] [data-baseweb="select"] > div {
+    background: rgba(10, 26, 46, 0.6) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    border-radius: 10px !important;
+    color: rgba(255,255,255,0.9) !important;
+}
+[data-testid="stMainBlockContainer"] [data-baseweb="select"] span {
+    color: rgba(255,255,255,0.9) !important;
+}
+
 /* ── Alert/info box ── */
 .stAlert { border-radius: 8px !important; }
 </style>
