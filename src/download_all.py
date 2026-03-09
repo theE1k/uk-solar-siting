@@ -182,30 +182,27 @@ def download_protected_areas():
 # 4–6. OSM data via Overpass API
 # ---------------------------------------------------------------------------
 
-OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+OVERPASS_MIRRORS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+]
 UK_BBOX = "49.9,-8.2,60.9,1.8"
 OVERPASS_RETRIES = 4
 OVERPASS_RETRY_DELAY = 30  # seconds between retries
 
 
-def _overpass_query(query: str, timeout: int = 600) -> dict:
-    """POST an Overpass query with automatic retry on 504/connection errors."""
-    for attempt in range(1, OVERPASS_RETRIES + 1):
+def _overpass_post(query, timeout=300):
+    """Try each Overpass mirror in turn; raise on all failures."""
+    for url in OVERPASS_MIRRORS:
         try:
-            resp = requests.post(OVERPASS_URL, data={"data": query}, timeout=timeout)
-            if resp.status_code == 504:
-                print(f"  Overpass 504 (attempt {attempt}/{OVERPASS_RETRIES}), retrying in {OVERPASS_RETRY_DELAY}s …")
-                time.sleep(OVERPASS_RETRY_DELAY)
-                continue
+            resp = requests.post(url, data={"data": query}, timeout=timeout)
             resp.raise_for_status()
-            return resp.json()
-        except requests.exceptions.ConnectionError as e:
-            if attempt < OVERPASS_RETRIES:
-                print(f"  Connection error (attempt {attempt}/{OVERPASS_RETRIES}), retrying in {OVERPASS_RETRY_DELAY}s …")
-                time.sleep(OVERPASS_RETRY_DELAY)
-            else:
-                raise
-    raise RuntimeError(f"Overpass API failed after {OVERPASS_RETRIES} attempts (504 timeout)")
+            return resp
+        except Exception as e:
+            print(f"  [warn] {url} failed: {e} — trying next mirror …")
+            time.sleep(3)
+    raise RuntimeError("All Overpass mirrors failed. Try again later.")
 
 
 def download_osm_substations():
@@ -225,7 +222,8 @@ def download_osm_substations():
     out center;
     """
     print("  Querying Overpass API for substations …")
-    data = _overpass_query(query)
+    resp = _overpass_post(query, timeout=300)
+    data = resp.json()
 
     points = []
     for el in data.get("elements", []):
@@ -260,7 +258,8 @@ def download_osm_roads():
     out center;
     """
     print("  Querying Overpass API for major roads …")
-    data = _overpass_query(query)
+    resp = _overpass_post(query, timeout=600)
+    data = resp.json()
 
     points = []
     for el in data.get("elements", []):
@@ -295,7 +294,9 @@ def download_osm_transmission():
     out center;
     """
     print("  Querying Overpass API for 132kV+ transmission lines …")
-    data = _overpass_query(query)
+
+    resp = _overpass_post(query, timeout=600)
+    data = resp.json()
 
     points = []
     for el in data.get("elements", []):
