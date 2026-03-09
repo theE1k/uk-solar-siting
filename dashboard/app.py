@@ -56,6 +56,7 @@ div, span, label, button, input, select, textarea,
     margin-top: 1.8rem !important;
     padding-top: 1.2rem !important;
     border-top: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.9) !important;
 }
 
 /* ── Sidebar text visibility ── */
