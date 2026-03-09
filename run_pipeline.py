@@ -11,8 +11,53 @@ Usage:
 import argparse
 import sys
 import time
+from pathlib import Path
 
-from src.utils import load_config
+from src.utils import load_config, resolve_path
+
+
+def _preflight_check(cfg: dict, phase_num: int):
+    """Check that raw data files required for this phase exist.
+    If Phase 2 raw files are missing, offer to auto-download them.
+    """
+    if phase_num == 2:
+        required = {
+            "ERA5 NetCDF": cfg["paths"]["era5_nc"],
+            "OS Terrain 50": cfg["paths"]["terrain_tif"],
+            "OSM Substations": cfg["paths"]["osm_substations_shp"],
+            "OSM Roads": cfg["paths"]["osm_roads_shp"],
+            "OSM Transmission": cfg["paths"]["osm_transmission_shp"],
+            "Protected Areas": cfg["paths"]["protected_areas_shp"],
+            "SSSI": cfg["paths"]["sssi_shp"],
+            "Flood Zones": cfg["paths"]["flood_zones_shp"],
+        }
+        missing = [name for name, path in required.items() if not resolve_path(path).exists()]
+        if missing:
+            print("\n[WARNING] The following raw data files are missing:")
+            for name in missing:
+                print(f"  - {name}")
+            answer = input("\nRun data downloader now? [Y/n]: ").strip().lower()
+            if answer in ("", "y", "yes"):
+                from src.download_all import (
+                    download_uk_boundary, download_protected_areas,
+                    download_osm_substations, download_osm_roads,
+                    download_osm_transmission, download_sssi,
+                    download_flood_zones, download_agricultural_land,
+                    download_era5_if_configured, setup_terrain,
+                )
+                download_uk_boundary()
+                download_protected_areas()
+                download_osm_substations()
+                download_osm_roads()
+                download_osm_transmission()
+                download_sssi()
+                download_flood_zones()
+                download_agricultural_land()
+                download_era5_if_configured()
+                setup_terrain()
+            else:
+                print("Skipping download. Phase 2 may fail if files are still missing.")
+                print("Run manually: python src/download_all.py")
 
 
 def run_phase1(cfg):
@@ -79,6 +124,7 @@ def main():
         if phase_num not in PHASES:
             print(f"ERROR: Unknown phase {phase_num}. Valid: {list(PHASES.keys())}")
             sys.exit(1)
+        _preflight_check(cfg, phase_num)
         PHASES[phase_num](cfg)
 
     elapsed = time.time() - t0
