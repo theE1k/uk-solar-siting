@@ -58,6 +58,32 @@ div, span, label, button, input, select, textarea,
     border-top: 1px solid rgba(255,255,255,0.1);
 }
 
+/* ── Sidebar text visibility ── */
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] .stSlider label,
+[data-testid="stSidebar"] .stSlider [data-testid="stWidgetLabel"] p,
+[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p,
+[data-testid="stSidebar"] .stMultiSelect [data-testid="stWidgetLabel"] p,
+[data-testid="stSidebar"] .stCheckbox label span,
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] span {
+    color: rgba(255,255,255,0.85) !important;
+}
+[data-testid="stSidebar"] .stSlider [data-testid="stThumbValue"],
+[data-testid="stSidebar"] .stSlider [data-testid="stTickBarMin"],
+[data-testid="stSidebar"] .stSlider [data-testid="stTickBarMax"] {
+    color: rgba(255,255,255,0.7) !important;
+}
+[data-testid="stSidebar"] [data-testid="stMetricValue"] {
+    color: #d0b75c !important;
+}
+[data-testid="stSidebar"] [data-testid="stMetricLabel"] p {
+    color: rgba(255,255,255,0.6) !important;
+}
+[data-testid="stSidebar"] .stCaption, [data-testid="stSidebar"] .stCaption p {
+    color: rgba(255,255,255,0.5) !important;
+}
+
 /* ── Streamlit top navbar transparent ── */
 [data-testid="stHeader"] {
     background: transparent !important;
