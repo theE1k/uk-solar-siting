@@ -61,13 +61,9 @@ div, span, label, button, input, select, textarea,
 
 /* ── Sidebar text visibility ── */
 [data-testid="stSidebar"] label,
-[data-testid="stSidebar"] .stSlider label,
-[data-testid="stSidebar"] .stSlider [data-testid="stWidgetLabel"] p,
 [data-testid="stSidebar"] [data-testid="stWidgetLabel"] p,
-[data-testid="stSidebar"] .stMultiSelect [data-testid="stWidgetLabel"] p,
 [data-testid="stSidebar"] .stCheckbox label span,
-[data-testid="stSidebar"] p,
-[data-testid="stSidebar"] span {
+[data-testid="stSidebar"] [data-testid="stSidebarContent"] p {
     color: rgba(255,255,255,0.85) !important;
 }
 [data-testid="stSidebar"] .stSlider [data-testid="stThumbValue"],
