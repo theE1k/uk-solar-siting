@@ -5,6 +5,7 @@ and create data/raw/os_terrain50.tif in EPSG:27700.
 Uses rasterio only — no GDAL CLI required.
 """
 from pathlib import Path
+from typing import Optional
 import numpy as np
 import requests
 import rasterio
@@ -30,7 +31,7 @@ def tile_url(lat: int, lon: int) -> str:
     return f"{BASE_URL}/{name}/{name}.tif"
 
 
-def download_tile(lat: int, lon: int) -> Path | None:
+def download_tile(lat: int, lon: int) -> Optional[Path]:
     url = tile_url(lat, lon)
     ns = f"N{lat:02d}"
     ew = f"W{abs(lon):03d}" if lon < 0 else f"E{lon:03d}"
@@ -38,7 +39,7 @@ def download_tile(lat: int, lon: int) -> Path | None:
     if dest.exists():
         return dest
     try:
-        resp = requests.get(url, timeout=60, stream=True)
+        resp = requests.get(url, timeout=60)
         if resp.status_code == 404:
             return None  # ocean-only tile
         resp.raise_for_status()
@@ -74,11 +75,13 @@ def build_dem():
 
     print(f"\n[DEM] Merging {len(tile_paths)} tiles …")
     datasets = [rasterio.open(p) for p in tile_paths]
-    merged, merged_transform = merge(datasets)
-    src_crs = datasets[0].crs
-    nodata_val = datasets[0].nodata
-    for ds in datasets:
-        ds.close()
+    try:
+        merged, merged_transform = merge(datasets)
+        src_crs = datasets[0].crs
+        nodata_val = datasets[0].nodata
+    finally:
+        for ds in datasets:
+            ds.close()
 
     # Replace nodata with NaN
     if nodata_val is not None:

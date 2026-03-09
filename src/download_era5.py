@@ -41,8 +41,8 @@ def download_era5():
     if not _load_env():
         return
 
-    cds_url = 'https://cds.climate.copernicus.eu/api'
-    cds_key = '88ee624b-86aa-4027-9306-41806600716b'
+    cds_url = os.environ.get("CDS_URL", "https://cds.climate.copernicus.eu/api")
+    cds_key = os.environ.get("CDS_KEY", "")
     if not cds_key or "<your" in cds_key:
         print("ERROR: CDS_KEY not configured. Edit .env in project root.")
         return

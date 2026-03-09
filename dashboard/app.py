@@ -166,8 +166,6 @@ sys.path.insert(0, str(ROOT))
 
 DATA_OUT = ROOT / "data" / "output"
 DATA_RAW = ROOT / "data" / "raw"
-LOGO_PATH = ROOT / "dashboard" / "assets" / "nw_logo.png"
-
 # ── Page config ─────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="NW Solar Siting",
@@ -342,7 +340,7 @@ def build_map(sites_df: pd.DataFrame,
     HeatMap(
         heat_data,
         min_opacity=0.3,
-
+        max_val=1.0,
         radius=12,
         blur=15,
         gradient={
@@ -391,7 +389,7 @@ def build_map(sites_df: pd.DataFrame,
     HeatMap(
         pvgis_heat,
         min_opacity=0.3,
-
+        max_val=1.0,
         radius=20,
         blur=25,
         gradient={
@@ -883,7 +881,7 @@ def main():
         }
         </style>
         """, unsafe_allow_html=True)
-        st.plotly_chart(plot_site_detail(row, tariff), width="stretch")
+        st.plotly_chart(plot_site_detail(row, tariff), use_container_width=True)
 
         # Constraint flags
         flags = []
@@ -931,7 +929,7 @@ def main():
                          "npv_gbp": "£{:,.0f}",
                          "constraint_score": "{:.2f}",
                      }),
-            width="stretch",
+            use_container_width=True,
             height=550,
         )
 
