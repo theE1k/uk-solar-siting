@@ -39,7 +39,7 @@ paths:
 
 # --- Phase 1: Labeling -----------------------------------------------
 labeling:
-  repd_url: "https://assets.publishing.service.gov.uk/media/renewable-energy-planning-database.csv"
+  repd_url: "https://assets.publishing.service.gov.uk/media/6985c316d3f57710b50a9b1f/REPD_Publication_Q4_2025.csv"
   # REPD filters
   technology: "Solar Photovoltaics"
   status_include:
