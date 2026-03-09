@@ -24,6 +24,7 @@ Datasets requiring manual download:
 import io
 import json
 import os
+import time
 import zipfile
 from pathlib import Path
 
@@ -187,6 +188,28 @@ OVERPASS_MIRRORS = [
     "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
 ]
 UK_BBOX = "49.9,-8.2,60.9,1.8"
+OVERPASS_RETRIES = 4
+OVERPASS_RETRY_DELAY = 30  # seconds between retries
+
+
+def _overpass_query(query: str, timeout: int = 600) -> dict:
+    """POST an Overpass query with automatic retry on 504/connection errors."""
+    for attempt in range(1, OVERPASS_RETRIES + 1):
+        try:
+            resp = requests.post(OVERPASS_URL, data={"data": query}, timeout=timeout)
+            if resp.status_code == 504:
+                print(f"  Overpass 504 (attempt {attempt}/{OVERPASS_RETRIES}), retrying in {OVERPASS_RETRY_DELAY}s …")
+                time.sleep(OVERPASS_RETRY_DELAY)
+                continue
+            resp.raise_for_status()
+            return resp.json()
+        except requests.exceptions.ConnectionError as e:
+            if attempt < OVERPASS_RETRIES:
+                print(f"  Connection error (attempt {attempt}/{OVERPASS_RETRIES}), retrying in {OVERPASS_RETRY_DELAY}s …")
+                time.sleep(OVERPASS_RETRY_DELAY)
+            else:
+                raise
+    raise RuntimeError(f"Overpass API failed after {OVERPASS_RETRIES} attempts (504 timeout)")
 
 
 def _overpass_post(query, timeout=300):
@@ -292,6 +315,7 @@ def download_osm_transmission():
     out center;
     """
     print("  Querying Overpass API for 132kV+ transmission lines …")
+
     resp = _overpass_post(query, timeout=600)
     data = resp.json()
 
