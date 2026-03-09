@@ -5,6 +5,7 @@ Northumbrian Water Team
 Run: streamlit run dashboard/app.py
 """
 
+import base64
 import sys
 from pathlib import Path
 
@@ -17,12 +18,155 @@ from plotly.subplots import make_subplots
 import streamlit as st
 from streamlit_folium import st_folium
 
+# ── Background image ──────────────────────────────────────────────────────────
+_bg_path = Path(__file__).parent / "assets" / "background.png"
+_bg_b64 = base64.b64encode(_bg_path.read_bytes()).decode() if _bg_path.exists() else ""
+
+_logo_path = Path(__file__).parent / "assets" / "nw_logo.png"
+_logo_b64 = base64.b64encode(_logo_path.read_bytes()).decode() if _logo_path.exists() else ""
+
+_sidebar_logo_path = Path(__file__).parent / "assets" / "nw_sidebar.png"
+_sidebar_logo_b64 = base64.b64encode(_sidebar_logo_path.read_bytes()).decode() if _sidebar_logo_path.exists() else ""
+
+_welcome_path = Path(__file__).parent / "assets" / "image_welcome.png"
+_welcome_b64 = base64.b64encode(_welcome_path.read_bytes()).decode() if _welcome_path.exists() else ""
+
+# ── Custom CSS ────────────────────────────────────────────────────────────────
+_CSS = """
+<style>
+/* ── Font ── */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700&display=swap');
+html, body, [class*="css"],
+*, *::before, *::after,
+p, h1, h2, h3, h4, h5, h6,
+div, span, label, button, input, select, textarea,
+.stMarkdown, .stText, .stButton, .stSelectbox, .stSlider,
+.stDataFrame, .stTable, .stMetric,
+[data-testid], [data-baseweb] {
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+/* ── Layout ── */
+.block-container { padding-top: 3.5rem !important; }
+
+/* ── Sidebar subheaders ── */
+[data-testid="stSidebar"] h3 {
+    font-weight: 400 !important;
+    font-family: 'Montserrat', sans-serif !important;
+    margin-top: 1.8rem !important;
+    padding-top: 1.2rem !important;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ── Streamlit top navbar transparent ── */
+[data-testid="stHeader"] {
+    background: transparent !important;
+    backdrop-filter: none !important;
+}
+
+
+/* ── Header banner ── */
+.nw-header {
+    background: transparent;
+    padding: 1.2rem 1.8rem;
+    border-radius: 12px;
+    margin-bottom: 1.4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+}
+.nw-header img {
+    width: 500px;
+    height: auto;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+}
+.nw-header-title {
+    font-size: 2.9rem;
+    font-weight: 100;
+    font-family: 'Montserrat', sans-serif;
+    color: #ffffff;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.6);
+}
+.nw-header-subtitle {
+    font-size: 1.1rem;
+    color: #7aaecf;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+/* ── KPI cards ── */
+.kpi-row { display: flex; gap: 1rem; margin-bottom: 1.4rem; }
+.kpi-card {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(4px);
+    border-radius: 35px;
+    padding: 2rem 1.5rem;
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    text-align: center;
+}
+.kpi-value {
+    font-size: 2.2rem;
+    font-weight: 200;
+    color: #ffffff;
+    line-height: 1.15;
+    font-family: 'Montserrat', sans-serif;
+}
+.kpi-label {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 300;
+    margin-top: 0.2rem;
+}
+
+/* ── Tabs ── */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 6px;
+    background: rgba(10, 26, 46, 0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-radius: 16px;
+    padding: 6px;
+    border: 1px solid rgba(255,255,255,0.1);
+    justify-content: center;
+}
+.stTabs [data-baseweb="tab"] {
+    border-radius: 12px;
+    padding: 0.7rem 2rem;
+    font-weight: 200;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+}
+.stTabs [aria-selected="true"] {
+    background: rgba(208, 183, 92, 0.15) !important;
+    color: #d0b75c !important;
+    font-weight: 300 !important;
+    border: 1px solid rgba(246,201,14,0.4) !important;
+}
+
+/* ── Alert/info box ── */
+.stAlert { border-radius: 8px !important; }
+</style>
+"""
+
 # ── Path setup ──────────────────────────────────────────────────────────────
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 DATA_OUT = ROOT / "data" / "output"
 DATA_RAW = ROOT / "data" / "raw"
+LOGO_PATH = ROOT / "dashboard" / "assets" / "nw_logo.png"
 
 # ── Page config ─────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -198,7 +342,7 @@ def build_map(sites_df: pd.DataFrame,
     HeatMap(
         heat_data,
         min_opacity=0.3,
-        max_val=1.0,
+
         radius=12,
         blur=15,
         gradient={
@@ -247,7 +391,7 @@ def build_map(sites_df: pd.DataFrame,
     HeatMap(
         pvgis_heat,
         min_opacity=0.3,
-        max_val=1.0,
+
         radius=20,
         blur=25,
         gradient={
@@ -302,6 +446,7 @@ def build_map(sites_df: pd.DataFrame,
         font-size: 12px;
         line-height: 1.7;
         min-width: 210px;
+        color: #222;
     ">
       <b style="font-size:13px">Legend</b>
 
@@ -310,7 +455,7 @@ def build_map(sites_df: pd.DataFrame,
         <span style="color:#2ca02c">●</span> &gt; 0.75 &nbsp; High priority<br>
         <span style="color:#ff7f0e">●</span> 0.50–0.75 &nbsp; Medium priority<br>
         <span style="color:#d62728">●</span> &lt; 0.50 &nbsp; Low priority<br>
-        <span style="font-size:10px;color:#666">Score = 40% geo + 40% financial + 20% constraints</span>
+        <span style="font-size:10px;color:#444">Score = 40% geo + 40% financial + 20% constraints</span>
       </div>
 
       <div style="margin-top:8px; border-top:1px solid #ddd; padding-top:6px">
@@ -318,8 +463,8 @@ def build_map(sites_df: pd.DataFrame,
         <span style="display:inline-block;width:130px;height:10px;
           background:linear-gradient(to right,#2196F3,#4CAF50,#FFEB3B,#FF9800,#F44336);
           border-radius:3px;vertical-align:middle"></span><br>
-        <span style="color:#555">Low → High &nbsp; ML suitability probability (0–1)</span><br>
-        <span style="font-size:10px;color:#888">Combines terrain, grid proximity, land use, constraints</span>
+        <span style="color:#222">Low → High &nbsp; ML suitability probability (0–1)</span><br>
+        <span style="font-size:10px;color:#444">Combines terrain, grid proximity, land use, constraints</span>
       </div>
 
       <div style="margin-top:8px; border-top:1px solid #ddd; padding-top:6px">
@@ -327,8 +472,8 @@ def build_map(sites_df: pd.DataFrame,
         <span style="display:inline-block;width:130px;height:10px;
           background:linear-gradient(to right,#2196F3,#4CAF50,#FFEB3B,#FF9800,#F44336);
           border-radius:3px;vertical-align:middle"></span><br>
-        <span style="color:#555">Low → High &nbsp; Annual yield (kWh/kWp, normalised)</span><br>
-        <span style="font-size:10px;color:#888">Satellite solar resource data only</span>
+        <span style="color:#222">Low → High &nbsp; Annual yield (kWh/kWp, normalised)</span><br>
+        <span style="font-size:10px;color:#444">Satellite solar resource data only</span>
       </div>
 
       <div style="margin-top:8px; border-top:1px solid #ddd; padding-top:6px">
@@ -344,6 +489,14 @@ def build_map(sites_df: pd.DataFrame,
     </div>
     """
     m.get_root().html.add_child(folium.Element(legend_html))
+
+    # Inject Montserrat font into the map iframe
+    m.get_root().html.add_child(folium.Element("""
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500&display=swap" rel="stylesheet">
+    <style>
+    * { font-family: 'Montserrat', sans-serif !important; }
+    </style>
+    """))
 
     return m
 
@@ -373,7 +526,7 @@ def plot_site_detail(row: pd.Series, tariff: float) -> go.Figure:
     fig = make_subplots(
         rows=1, cols=3,
         subplot_titles=["24h Load & Solar", "Electricity Price", "25yr Financial Projection"],
-        horizontal_spacing=0.08,
+        horizontal_spacing=0.12,
     )
 
     # -- Chart 1: Load curve --
@@ -383,7 +536,7 @@ def plot_site_detail(row: pd.Series, tariff: float) -> go.Figure:
     ), row=1, col=1)
     fig.add_trace(go.Scatter(
         x=HOURS, y=solar_consumed + solar_exported, name="Solar Total",
-        line=dict(color="#f6c90e", width=2, dash="dot"),
+        line=dict(color="#d0b75c", width=2, dash="dot"),
     ), row=1, col=1)
     fig.add_trace(go.Scatter(
         x=HOURS, y=solar_consumed, name="Self-consumed",
@@ -403,7 +556,7 @@ def plot_site_detail(row: pd.Series, tariff: float) -> go.Figure:
     fig.add_trace(go.Scatter(
         x=HOURS[solar_mask], y=UK_PRICE_HOURLY[solar_mask],
         mode="markers", name="Solar hours",
-        marker=dict(color="#f6c90e", size=10, symbol="star"),
+        marker=dict(color="#d0b75c", size=10, symbol="star"),
     ), row=1, col=2)
 
     # -- Chart 3: Financial projection --
@@ -429,29 +582,147 @@ def plot_site_detail(row: pd.Series, tariff: float) -> go.Figure:
                       annotation_text=f"Payback {payback_yr}yr", row=1, col=3)
 
     fig.update_layout(
-        height=380,
-        margin=dict(l=30, r=20, t=50, b=30),
-        legend=dict(orientation="h", y=1.15, x=0),
-        paper_bgcolor="white",
-        plot_bgcolor="white",
+        height=460,
+        margin=dict(l=40, r=40, t=110, b=80),
+        legend=dict(orientation="h", y=-0.25, x=0.5, xanchor="center", font=dict(color="#ffffff")),
+        paper_bgcolor="rgba(10, 26, 46, 0.55)",
+        plot_bgcolor="rgba(10, 26, 46, 0.35)",
+        font=dict(color="#ffffff", family="Montserrat, sans-serif"),
     )
-    fig.update_xaxes(title_text="Hour", row=1, col=1)
-    fig.update_xaxes(title_text="Hour", row=1, col=2)
-    fig.update_xaxes(title_text="Year", row=1, col=3)
-    fig.update_yaxes(title_text="kW", row=1, col=1)
-    fig.update_yaxes(title_text="£/kWh", row=1, col=2)
-    fig.update_yaxes(title_text="£", row=1, col=3)
+    fig.update_xaxes(title_text="Hour", row=1, col=1, title_font=dict(color="#ffffff"), tickfont=dict(color="#cccccc"))
+    fig.update_xaxes(title_text="Hour", row=1, col=2, title_font=dict(color="#ffffff"), tickfont=dict(color="#cccccc"))
+    fig.update_xaxes(title_text="Year", row=1, col=3, title_font=dict(color="#ffffff"), tickfont=dict(color="#cccccc"))
+    fig.update_yaxes(title_text="kW", row=1, col=1, title_font=dict(color="#ffffff"), tickfont=dict(color="#cccccc"))
+    fig.update_yaxes(title_text="£/kWh", row=1, col=2, title_font=dict(color="#ffffff"), tickfont=dict(color="#cccccc"))
+    fig.update_yaxes(title_text="£", row=1, col=3, title_font=dict(color="#ffffff"), tickfont=dict(color="#cccccc"))
+
+    # Push only subplot titles (those with yref="paper" and y close to 1.0) higher
+    subplot_title_texts = ["24h Load & Solar", "Electricity Price", "25yr Financial Projection"]
+    for annotation in fig.layout.annotations:
+        if annotation.text in subplot_title_texts:
+            annotation.y += 0.12
+
     return fig
+
+
+# ── Splash screen ────────────────────────────────────────────────────────────
+def splash():
+    st.markdown(_CSS, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <style>
+    .stApp {{ background: #000 !important; }}
+    [data-testid="stHeader"] {{ display: none !important; }}
+    [data-testid="stSidebar"] {{ display: none !important; }}
+    .block-container {{ padding: 0 !important; margin: 0 !important; max-width: 100% !important; }}
+    </style>
+    <div style="position:fixed; inset:0; z-index:0;">
+        <img src="data:image/png;base64,{_welcome_b64}" style="width:100%; height:100%; object-fit:cover; filter:brightness(0.8);" />
+    </div>
+    <div style="position:fixed; bottom:8vh; left:0; right:0; z-index:1; display:flex; justify-content:center;">
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <style>
+    div[data-testid="stButton"] > button {
+        background: rgba(255, 255, 255, 0.75) !important;
+        border: none !important;
+        color: #0a1a2e !important;
+        font-family: 'Montserrat', sans-serif !important;
+        font-weight: 500 !important;
+        font-size: 1.3rem !important;
+        letter-spacing: 0.15em !important;
+        text-transform: uppercase !important;
+        border-radius: 50px !important;
+        padding: 1.5rem 3.5rem !important;
+        transition: all 0.3s ease !important;
+        width: 100% !important;
+    }
+    div[data-testid="stButton"] > button:hover {
+        background: rgba(255, 255, 255, 0.15) !important;
+        color: #ffffff !important;
+        transition: all 0.8s ease !important;
+    }
+    .splash-btn-wrapper {
+        position: fixed;
+        bottom: 8vh;
+        left: 0; right: 0;
+        z-index: 10;
+        display: flex;
+        justify-content: center;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div style="margin-top: calc(86vh - 60px);"></div>', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1.59, 1, 1])
+    with col2:
+        if st.button("Start"):
+            st.session_state["started"] = True
+            st.rerun()
 
 
 # ── Main app ─────────────────────────────────────────────────────────────────
 def main():
-    st.title("☀️ UK Solar Siting — Northumbrian Water")
-    st.caption("Interactive siting dashboard powered by ML + financial modelling")
+    st.markdown(_CSS, unsafe_allow_html=True)
+
+    if _bg_b64:
+        st.markdown(f"""
+        <style>
+        .stApp {{
+            background-image: url("data:image/png;base64,{_bg_b64}") !important;
+            background-size: cover !important;
+            background-position: center !important;
+            background-attachment: fixed !important;
+        }}
+        [data-testid="stSidebar"] {{
+            background-image: none !important;
+            background-color: rgba(10, 26, 46, 0.15) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+        }}
+        .stApp::before {{
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 15, 30, 0.7);
+            pointer-events: none;
+            z-index: 0;
+        }}
+        .block-container {{
+            position: relative;
+            z-index: 1;
+        }}
+        </style>
+        """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div class="nw-header">
+      <img src="data:image/png;base64,{_logo_b64}" alt="Northumbrian Water logo" />
+      <div class="nw-header-title">Solar Site Finder</div>
+      <div class="nw-header-subtitle">ML · Geospatial · Financial Modelling</div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # ── Sidebar ──────────────────────────────────────────────────────────────
     with st.sidebar:
-        st.header("Parameters")
+        st.markdown("""
+        <div style="
+            text-align:center;
+            padding:0.75rem 1rem;
+            margin-bottom:2rem;
+            border-radius:30px;
+            border:1px solid #1e4a72;
+            background:rgba(10, 26, 46, 0.01);
+            backdrop-filter:blur(6px);
+        ">
+          <div style="font-size:1rem; font-weight:300; color:#7aaecf; letter-spacing:0.02em;">
+            Adjust parameters to explore scenarios
+          </div>
+        </div>
+        <hr style="border:none; border-top:2px solid #d0b75c; margin:0 0 0.8rem;">
+        """, unsafe_allow_html=True)
 
         st.subheader("Financial")
         tariff = st.slider("Electricity tariff (£/kWh)", 0.08, 0.25, 0.15, 0.01,
@@ -486,23 +757,47 @@ def main():
         sites["rank"] = sites.index + 1
 
     # ── KPI strip ────────────────────────────────────────────────────────────
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Total sites", len(sites))
-    col2.metric("Avg payback", f"{sites['payback_yr'].mean():.1f} yr")
-    col3.metric("Avg NPV", f"£{sites['npv_gbp'].mean():,.0f}")
-    col4.metric("High-priority (>0.75)", int((sites["final_score"] > 0.75).sum()))
+    high_priority = int((sites["final_score"] > 0.75).sum())
+    st.markdown(f"""
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-value">{len(sites)}</div>
+        <div class="kpi-label">Total Sites</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">{sites['payback_yr'].mean():.1f} yr</div>
+        <div class="kpi-label">Avg Payback</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">£{sites['npv_gbp'].mean():,.0f}</div>
+        <div class="kpi-label">Avg NPV (25 yr)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">{high_priority}</div>
+        <div class="kpi-label">High Priority (&gt;0.75)</div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # ── Tabs ─────────────────────────────────────────────────────────────────
     tab_map, tab_detail, tab_table = st.tabs(["Map", "Site Detail", "Rankings"])
 
     # ── TAB 1: Map ───────────────────────────────────────────────────────────
     with tab_map:
+        st.markdown("""
+        <style>
+        [data-testid="stNotificationContentInfo"] { color: rgba(255,255,255,0.45) !important; }
+        [data-testid="stNotificationContentInfo"] p { color: rgba(255,255,255,0.45) !important; }
+        </style>
+        """, unsafe_allow_html=True)
         st.info(
             "Click a site marker to select it in **Site Detail** tab. "
             "Use the layer control (top-right) to toggle map layers."
         )
         m = build_map(sites, show_pvgis, show_protected, show_flood)
+        st.markdown('<div style="border-radius:16px; border:2px solid #1e4a72; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.4);">', unsafe_allow_html=True)
         map_data = st_folium(m, width="100%", height=580, returned_objects=["last_object_clicked"])
+        st.markdown('</div>', unsafe_allow_html=True)
 
         # Store clicked coords in session state for Tab 2
         if map_data and map_data.get("last_object_clicked"):
@@ -531,6 +826,26 @@ def main():
             if match:
                 default_label = match[0]
 
+        st.markdown("""
+        <style>
+        [data-testid="stSelectbox"] {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 16px;
+            padding: 0.8rem 1rem 0.6rem 1rem;
+        }
+        [data-testid="stSelectbox"] [data-baseweb="select"] > div {
+            background: rgba(10, 26, 46, 0.6) !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            border-radius: 10px !important;
+        }
+        [data-testid="stSelectbox"] [data-testid="stWidgetLabel"] p {
+            font-size: 1.4rem !important;
+            font-weight: 300 !important;
+            font-family: 'Montserrat', sans-serif !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
         chosen_label = st.selectbox("Select site", site_labels,
                                     index=site_labels.index(default_label)
                                     if default_label in site_labels else 0)
@@ -538,6 +853,19 @@ def main():
         row = sites[sites["rank"] == chosen_rank].iloc[0]
 
         # Info card
+        st.markdown("""
+        <style>
+        [data-testid="stMetricValue"] {
+            font-weight: 200 !important;
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 2.2rem !important;
+        }
+        [data-testid="stMetricLabel"] {
+            font-weight: 300 !important;
+            font-family: 'Montserrat', sans-serif !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
         c1, c2, c3, c4, c5 = st.columns(5)
         c1.metric("Final score", f"{row['final_score']:.3f}")
         c2.metric("Capacity", f"{int(row['capacity_kwp'])} kWp")
@@ -546,7 +874,16 @@ def main():
         stars = "★★★" if row["battery_value"] >= 0.7 else ("★★" if row["battery_value"] >= 0.5 else "★")
         c5.metric("Battery value", stars)
 
-        st.plotly_chart(plot_site_detail(row, tariff), use_container_width=True)
+        st.markdown("""
+        <style>
+        [data-testid="stPlotlyChart"] {
+            border-radius: 30px !important;
+            overflow: hidden !important;
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        st.plotly_chart(plot_site_detail(row, tariff), width="stretch")
 
         # Constraint flags
         flags = []
@@ -575,6 +912,14 @@ def main():
             lambda v: "★★★" if v >= 0.7 else ("★★" if v >= 0.5 else "★")
         )
 
+        st.markdown("""
+        <style>
+        [data-testid="stDataFrame"] > div {
+            border-radius: 16px !important;
+            overflow: hidden !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
         st.dataframe(
             tbl.style.background_gradient(subset=["final_score"], cmap="RdYlGn")
                      .background_gradient(subset=["npv_gbp"], cmap="Greens")
@@ -586,7 +931,7 @@ def main():
                          "npv_gbp": "£{:,.0f}",
                          "constraint_score": "{:.2f}",
                      }),
-            use_container_width=True,
+            width="stretch",
             height=550,
         )
 
@@ -595,4 +940,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if not st.session_state.get("started", False):
+        splash()
+    else:
+        main()

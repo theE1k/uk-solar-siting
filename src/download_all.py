@@ -181,8 +181,26 @@ def download_protected_areas():
 # 4–6. OSM data via Overpass API
 # ---------------------------------------------------------------------------
 
-OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+OVERPASS_MIRRORS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+]
 UK_BBOX = "49.9,-8.2,60.9,1.8"
+
+
+def _overpass_post(query, timeout=300):
+    """Try each Overpass mirror in turn; raise on all failures."""
+    import time
+    for url in OVERPASS_MIRRORS:
+        try:
+            resp = requests.post(url, data={"data": query}, timeout=timeout)
+            resp.raise_for_status()
+            return resp
+        except Exception as e:
+            print(f"  [warn] {url} failed: {e} — trying next mirror …")
+            time.sleep(3)
+    raise RuntimeError("All Overpass mirrors failed. Try again later.")
 
 
 def download_osm_substations():
@@ -202,8 +220,7 @@ def download_osm_substations():
     out center;
     """
     print("  Querying Overpass API for substations …")
-    resp = requests.post(OVERPASS_URL, data={"data": query}, timeout=300)
-    resp.raise_for_status()
+    resp = _overpass_post(query, timeout=300)
     data = resp.json()
 
     points = []
@@ -239,8 +256,7 @@ def download_osm_roads():
     out center;
     """
     print("  Querying Overpass API for major roads …")
-    resp = requests.post(OVERPASS_URL, data={"data": query}, timeout=600)
-    resp.raise_for_status()
+    resp = _overpass_post(query, timeout=600)
     data = resp.json()
 
     points = []
@@ -276,8 +292,7 @@ def download_osm_transmission():
     out center;
     """
     print("  Querying Overpass API for 132kV+ transmission lines …")
-    resp = requests.post(OVERPASS_URL, data={"data": query}, timeout=600)
-    resp.raise_for_status()
+    resp = _overpass_post(query, timeout=600)
     data = resp.json()
 
     points = []
