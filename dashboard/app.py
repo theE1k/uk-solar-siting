@@ -764,9 +764,9 @@ def main():
         """, unsafe_allow_html=True)
 
         st.subheader("Financial")
-        tariff = st.slider("Electricity tariff (£/kWh)", 0.08, 0.25, 0.15, 0.01,
+        tariff = st.slider("Electricity tariff (£/kWh)", 0.08, 0.35, 0.24, 0.01,
                            format="£%.2f")
-        capex_per_kwp = st.slider("CapEx (£/kWp)", 600, 1500, 1000, 50,
+        capex_per_kwp = st.slider("CapEx (£/kWp)", 500, 1500, 850, 50,
                                   format="£%d")
         project_years = st.slider("Project life (years)", 15, 30, 25, 1)
 

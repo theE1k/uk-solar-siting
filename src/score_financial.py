@@ -7,8 +7,8 @@ Outputs data/output/nw_sites_final_ranking.csv and an interactive HTML map.
 
 Default assumptions
 ───────────────────
-electricity_tariff_gbp_kwh : £0.15   (commercial rate; NW likely £0.12–0.18)
-capex_per_kwp              : £1000   (commercial rooftop/ground, incl. connection)
+electricity_tariff_gbp_kwh : £0.24   (2026 UK commercial avg; NW likely £0.20–0.27)
+capex_per_kwp              : £850    (2026 large commercial 50-100kWp+, incl. connection)
 discount_rate              : 0.06    (6% WACC)
 project_life_years         : 25
 panel_degradation_pct_yr   : 0.005   (0.5%/yr)
@@ -28,8 +28,8 @@ OUT  = Path(__file__).resolve().parent.parent / "data" / "output"
 OUT.mkdir(parents=True, exist_ok=True)
 
 # ── Default parameters (replace with NW actuals) ──────────────────────────
-TARIFF          = 0.15     # £/kWh avoided
-CAPEX_PER_KWP   = 1_000    # £/kWp
+TARIFF          = 0.24     # £/kWh avoided (2026 UK commercial average)
+CAPEX_PER_KWP   = 850      # £/kWp (2026 large commercial 50-100kWp+)
 DISCOUNT_RATE   = 0.06
 PROJECT_YEARS   = 25
 DEGRADATION     = 0.005    # per year
@@ -195,7 +195,7 @@ def generate_map(df: pd.DataFrame) -> str:
       <span style="color:red">●</span> &lt;0.50 Low priority<br>
       <hr style="margin:6px 0">
       <small>Score = 40% geo + 40% financial + 20% constraints<br>
-      Financial defaults: £0.15/kWh, £1,000/kWp CapEx</small>
+      Financial defaults: £0.24/kWh, £850/kWp CapEx</small>
     </div>
     """
     m.get_root().html.add_child(folium.Element(legend_html))
